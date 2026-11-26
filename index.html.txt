@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>கிராம மக்கள் தரவுத்தளம் - Village Public Database</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Mukta+Malar:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Mukta Malar', sans-serif; }
+        /* Custom scrollbar for wide table */
+        ::-webkit-scrollbar { height: 8px; width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 p-3 md:p-6">
+
+<div class="max-w-[1400px] mx-auto">
+    <!-- Header -->
+    <header class="bg-emerald-800 text-white p-5 rounded-2xl shadow-md mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div>
+            <h1 class="text-2xl md:text-3xl font-bold">கிராம மக்கள் தரவுத்தளம்</h1>
+            <p class="text-emerald-200 text-sm mt-1">முழுமையான குடும்ப, காணி, சான்றிதழ் மற்றும் அரச உதவி விவரங்கள்</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <button onclick="openModal()" class="bg-white text-emerald-800 font-bold px-4 py-2 rounded-xl shadow hover:bg-emerald-50 transition">+ புதிய பதிவு</button>
+            <button onclick="exportToCSV()" class="bg-emerald-600 border border-emerald-400 text-white px-4 py-2 rounded-xl shadow hover:bg-emerald-500 transition">Excel (CSV)</button>
+            <button onclick="exportJSON()" class="bg-emerald-900 text-white px-3 py-2 rounded-xl text-sm shadow hover:bg-emerald-950 transition">Backup</button>
+            <label class="bg-emerald-900 text-white px-3 py-2 rounded-xl text-sm shadow cursor-pointer hover:bg-emerald-950 transition">
+                Restore <input type="file" id="importFile" class="hidden" onchange="importJSON(event)">
+            </label>
+        </div>
+    </header>
+
+    <!-- Search & Filters Section -->
+    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1">தேடுதல் (பெயர் / முகவரி / வாக்காளர் இல.)</label>
+            <input type="text" id="searchBox" placeholder="தேடுக..." onkeyup="filterData()" class="w-full p-2 border rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+        </div>
+        <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1">தொழில் பிரிவு</label>
+            <select id="filterJob" onchange="filterData()" class="w-full p-2 border rounded-xl text-sm outline-none">
+                <option value="">அனைத்துத் தொழிலும்</option>
+                <option value="அரச தொழில் (Gov)">அரச தொழில் (Gov)</option>
+                <option value="தனியார் தொழில் (Private)">தனியார் தொழில் (Private)</option>
+                <option value="கூலித் தொழில் (Labour)">கூலித் தொழில் (Labour)</option>
+                <option value="வெளிநாடு (Foreign)">வெளிநாடு (Foreign)</option>
+                <option value="சுயதொழில் / விவசாயம்">சுயதொழில் / விவசாயம்</option>
+                <option value="தொழிலற்றவர் / மாணவர்">தொழிலற்றவர் / மாணவர்</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1">வீட்டு நிலைமை</label>
+            <select id="filterHouse" onchange="filterData()" class="w-full p-2 border rounded-xl text-sm outline-none">
+                <option value="">அனைத்து வீடுகளும்</option>
+                <option value="நிரந்தரம்">நிரந்தரம்</option>
+                <option value="வாடகை">வாடகை</option>
+                <option value="அரை நிரந்தரம்">அரை நிரந்தரம்</option>
+                <option value="குடிசை">குடிசை</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1">காணி விவரம்</label>
+            <select id="filterLand" onchange="filterData()" class="w-full p-2 border rounded-xl text-sm outline-none">
+                <option value="">அனைத்துக் காணிகளும்</option>
+                <option value="Deed (உறுதி)">Deed (உறுதி)</option>
+                <option value="Permit (அனுமதிப்பத்திரம்)">Permit (அனுமதிப்பத்திரம்)</option>
+                <option value="Lease (குத்தகை)">Lease (குத்தகை)</option>
+                <option value="No Document (ஆவணம் இல்லை)">No Document (ஆவணம் இல்லை)</option>
+                <option value="Encroach (ஆக்கிரமிப்பு)">Encroach (ஆக்கிரமிப்பு)</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs font-bold text-slate-500 mb-1">அரச உதவி</label>
+            <select id="filterAid" onchange="filterData()" class="w-full p-2 border rounded-xl text-sm outline-none">
+                <option value="">அனைத்தும்</option>
+                <option value="அஸ்வெசும (Aswesuma)">அஸ்வெசும (Aswesuma)</option>
+                <option value="முதியோர் கொடுப்பனவு (Elder)">முதியோர் கொடுப்பனவு (Elder)</option>
+                <option value="ஊனமுற்றோர் கொடுப்பனவு (Disable)">ஊனமுற்றோர் கொடுப்பனவு (Disable)</option>
+                <option value="சிறுநீரக நோயாளர் உதவி (Kidney)">சிறுநீரக நோயாளர் உதவி (Kidney)</option>
+                <option value="இல்லை">உதவி இல்லை</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Summary Count -->
+    <div class="mb-3 flex justify-between items-center text-sm text-slate-600 px-1">
+        <span>மொத்தப் பதிவுகள்: <strong id="totalCount" class="text-emerald-700 text-base">0</strong></span>
+        <span class="text-xs text-slate-400">அட்டவணையை வலது/இடது புறமாக நகர்த்தி அனைத்து விவரங்களையும் பார்க்கலாம் →</span>
+    </div>
+
+    <!-- Data Table -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm whitespace-nowrap">
+                <thead class="bg-slate-100 text-slate-700 border-b border-slate-200">
+                    <tr>
+                        <th class="p-3">பெயர் & முகவரி</th>
+                        <th class="p-3">வாக்காளர் இல. & தொலைபேசி</th>
+                        <th class="p-3">பிறந்த திகதி / வயது / மதம்</th>
+                        <th class="p-3">தொழில் / கல்வி / வருமானம்</th>
+                        <th class="p-3">சான்றிதழ்கள்</th>
+                        <th class="p-3">வீட்டு நிலைமை</th>
+                        <th class="p-3">காணி விவரம்</th>
+                        <th class="p-3">அரச உதவி</th>
+                        <th class="p-3 text-center">செயல்பாடுகள்</th>
+                    </tr>
+                </thead>
+                <tbody id="dataTableBody" class="divide-y divide-slate-100">
+                    <!-- Dynamic Rows -->
+                </tbody>
+            </table>
+        </div>
+        <div id="noData" class="p-8 text-center text-slate-400 hidden">பதிவுகள் எதுவும் இல்லை. "+ புதிய பதிவு" அழுத்தி விவரங்களைச் சேர்க்கவும்.</div>
+    </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div id="personModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center p-3 z-50">
+    <div class="bg-white w-full max-w-3xl rounded-2xl shadow-xl overflow-hidden max-h-[92vh] flex flex-col">
+        <div class="bg-emerald-800 text-white px-6 py-4 flex justify-between items-center">
+            <h3 id="modalTitle" class="font-bold text-lg">புதிய நபர் விபரம் பதிவு</h3>
+            <button onclick="closeModal()" class="text-white text-2xl font-bold leading-none">&times;</button>
+        </div>
+        
+        <form id="personForm" onsubmit="saveRecord(event)" class="p-6 overflow-y-auto grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <input type="hidden" id="editIndex" value="-1">
+            
+            <!-- Personal Info -->
+            <div class="md:col-span-2">
+                <label class="block font-bold mb-1">முழுப் பெயர் *</label>
+                <input type="text" id="pName" required class="w-full p-2 border rounded-xl">
+            </div>
+            <div>
+                <label class="block font-bold mb-1">வாக்காளர் இலக்கம் (Voter List No)</label>
+                <input type="text" id="pVoter" class="w-full p-2 border rounded-xl">
+            </div>
+
+            <div class="md:col-span-2">
+                <label class="block font-bold mb-1">முகவரி (Address)</label>
+                <input type="text" id="pAddress" class="w-full p-2 border rounded-xl">
+            </div>
+            <div>
+                <label class="block font-bold mb-1">தொலைபேசி எண் (Phone No)</label>
+                <input type="text" id="pPhone" class="w-full p-2 border rounded-xl">
+            </div>
+
+            <div>
+                <label class="block font-bold mb-1">பிறந்த திகதி (DOB)</label>
+                <input type="date" id="pDob" onchange="calculateAge()" class="w-full p-2 border rounded-xl">
+            </div>
+            <div>
+                <label class="block font-bold mb-1">வயது (Age)</label>
+                <input type="number" id="pAge" class="w-full p-2 border rounded-xl">
+            </div>
+            <div>
+                <label class="block font-bold mb-1">மதம் (Religion)</label>
+                <select id="pReligion" class="w-full p-2 border rounded-xl">
+                    <option value="இந்து">இந்து (Hindu)</option>
+                    <option value="கிறிஸ்தவம்">கிறிஸ்தவம் (Christian)</option>
+                    <option value="இஸ்லாம்">இஸ்லாம் (Islam)</option>
+                    <option value="பௌத்தம்">பௌத்தம் (Buddhist)</option>
+                    <option value="ஏனையவை">ஏனையவை</option>
+                </select>
+            </div>
+
+            <!-- Job, Edu, Income -->
+            <div>
+                <label class="block font-bold mb-1">தொழில் (Job)</label>
+                <select id="pJob" class="w-full p-2 border rounded-xl">
+                    <option value="அரச தொழில் (Gov)">அரச தொழில் (Gov)</option>
+                    <option value="தனியார் தொழில் (Private)">தனியார் தொழில் (Private)</option>
+                    <option value="கூலித் தொழில் (Labour)">கூலித் தொழில் (Labour)</option>
+                    <option value="வெளிநாடு (Foreign)">வெளிநாடு (Foreign)</option>
+                    <option value="சுயதொழில் / விவசாயம்">சுயதொழில் / விவசாயம்</option>
+                    <option value="தொழிலற்றவர் / மாணவர்">தொழிலற்றவர் / மாணவர்</option>
+                </select>
+            </div>
+            <div>
+                <label class="block font-bold mb-1">கல்வித் தகுதி (Education)</label>
+                <select id="pEdu" class="w-full p-2 border rounded-xl">
+                    <option value="தரம் 5 வரை">தரம் 5 வரை</option>
+                    <option value="தரம் 6 - 11">தரம் 6 - 11</option>
+                    <option value="O/L சித்தி">O/L சித்தி</option>
+                    <option value="
